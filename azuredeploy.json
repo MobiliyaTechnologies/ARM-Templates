@@ -188,35 +188,6 @@
 
     //B2C Parameters End
 
-    //AD Parameters Start
-
-    "AdSubscriptionId": {
-      "type": "string",
-      "metadata": {
-        "description": "Subscription ID of your Azure AD tenant"
-      }
-    },
-    "AdTenantId": {
-      "type": "string",
-      "metadata": {
-        "description": "Tenant ID of Azure AD"
-      }
-    },
-    "AdClientId": {
-      "type": "string",
-      "metadata": {
-        "description": "Client ID of Azure AD application"
-      }
-    },
-    "AdSecretKey": {
-      "type": "string",
-      "metadata": {
-        "description": "Secret Key of Azure AD application"
-      }
-    }
-
-    //AD Parameters End
-
   },
   "variables": {
     //IoT Hub Variables Start
@@ -986,8 +957,6 @@
           },
           "properties": {
             "ad:Endpoint": "[variables('ADEndpoint')]",
-            "ad:SubscriptionId": "[parameters('AdSubscriptionId')]",
-            "ad:TenantId": "[parameters('AdTenantId')]",
             "sa:WindowsManagementUri": "[variables('WindowsManagementUri')]",
             "sa:ReportJobName": "[variables('ReportJobName')]",
             "sa:JobResourceGroup": "[resourceGroup().name]",
@@ -1005,8 +974,6 @@
             "b2c:Tenant": "[parameters('b2cTenant')]",
             "b2c:ClientId": "[parameters('b2cClientId')]",
             "b2c:SignUpInPolicyId": "[parameters('b2cSignUpSignInPolicyId')]",
-            "ad:ClientId": "[parameters('AdClientId')]",
-            "ad:ClientSecret": "[parameters('AdSecretKey')]",
             "sa:AlertJobConsumerGroupPrefix": "[variables('AlertJobConsumerGroupPrefix')]",
             "sa:AlertJobConsumerGroupCount": "19",
             "documentDB:Endpoint": "[reference(concat('Microsoft.DocumentDb/databaseAccounts/', variables('DocDBAccountName'))).documentEndpoint]",
