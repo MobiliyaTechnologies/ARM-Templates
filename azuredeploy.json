@@ -230,7 +230,7 @@
     "eventhubNamepaceResourceID": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('namespaceName'), variables('defaultSASKeyName'))]",
     "primaryKey": "[concat(uniqueString(variables('namespaceName'), resourceGroup().Id, 'primaryKey'),'3VZcT2e5NfVeSFvTuiYUiWtXhxnJ2s=')]",
     "secondaryKey": "[concat(uniqueString(variables('namespaceName'), resourceGroup().Id, 'secondaryKey'),'F9NRSV78nYomDlFjsz21X9aVKPL4Eo=')]",
-    "eventhubConnectionString": "[concat('Endpoint=sb://', variables('namespaceName'), '.servicebus.windows.net/;SharedAccessKeyName=EventHubOwner;SharedAccessKey=', variables('primaryKey'), ';EntityPath=', parameters('eventHubName'))]",
+    "eventhubConnectionString": "[concat('Endpoint=sb://', variables('namespaceName'), '.servicebus.windows.net/;SharedAccessKeyName=EventHubOwner;SharedAccessKey=', variables('primaryKey'), ';Path=', parameters('eventHubName'))]",
 
     //Event Hub Variables End
 
@@ -244,9 +244,9 @@
     //Storage Variables Start
     "DeployStorageAccountName": "arm",
     "DeployStorageAccountKey": "?",
-    "WebAppDeployPackageURI": "https://arm.blob.core.windows.net/sysgaincheck/AssetMonitoring.zip",
-    "NodeServerDeployPackageURI": "https://arm.blob.core.windows.net/sysgaincheck/assetnodeserver.zip",
-    "RestServerDeployPackageURI": "https://arm.blob.core.windows.net/sysgaincheck/AssetMonitoring.API.zip",
+    "WebAppDeployPackageURI": "<Placeholder for Web App deployment package public blob URL>",
+    "NodeServerDeployPackageURI": "<Placeholder for Node App deployment package public blob URL>",
+    "RestServerDeployPackageURI": "<Placeholder for REST Server deployment package public blob URL>",
     "SasToken": "?",
     "webjobStorageName": "[concat('myperstr', uniqueString(resourceGroup().id))]",
     "blobStoragePublicContainer": "asset-monitoring-public-container",
@@ -268,7 +268,7 @@
 
     "sqlserverName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
     "storageKeyType": "SharedAccessKey",
-    "bacpacUri": "https://arm.blob.core.windows.net/sysgaincheck/AssetMonitoring.bacpac",
+    "bacpacUri": "<Placeholder for DB bacpac file public blob URL>",
     "sqlServerAddress": "[concat('tcp:',variables('sqlserverName'),'.database.windows.net')]",
     "databaseConnString": "[concat('Server=tcp:',variables('sqlserverName'),'.database.windows.net;initial catalog=',parameters('sqldatabasename'),';persist security info=True;user id=',parameters('sqlAdministratorLogin'),';password=',parameters('sqlAdministratorLoginPassword'),';MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;')]",
 
