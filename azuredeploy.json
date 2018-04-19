@@ -1,0 +1,946 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    //IoT Hub Parameters Start
+
+    "iotHubName1": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name of the IoT Hub instance to provision."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "allowedValues": [
+        "F1",
+        "S1",
+        "S2"
+      ],
+      "defaultValue": "S1",
+      "metadata": {
+        "description": "Pricing tier for IoT Hub"
+      }
+    },
+    "capacityUnits": {
+      "type": "int",
+      "minValue": 1,
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of desired IoT Hub units. Restricted to 1 unit for F1. Can be set up to maximum number allowed for subscription."
+      }
+    },
+
+    //IoT Hub Parameters End
+
+    //Event Hub Parameters Start
+
+    "namespaceNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the EventHub namespace"
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Event Hub"
+      }
+    },
+
+    //Event Hub Parameters End
+
+    //Database Paramerters Start
+
+    //Document DB Start
+    "databaseAccountNamePrefix": {
+      "type": "string",
+      "maxLength": 17,
+      "metadata": {
+        "description": "Prefix for DocumentDB database account name which should be unique."
+      }
+    },
+
+    //Document DB End
+
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The admin user of the SQL Server"
+      }
+    },
+    "sqlAdministratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password of the admin user of the SQL Server"
+      }
+    },
+    "sqldatabasename": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of SQL database"
+      }
+    },
+    //Database Paramerters End
+
+    //Web App Parameters Start
+
+    "webSkuName": {
+      "type": "string",
+      "defaultValue": "S1",
+      "allowedValues": [
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Describes plan's instance count"
+      }
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "defaultValue": "AppServPlan",
+      "metadata": {
+        "description": "Describes Hosting plan's name"
+      }
+    },
+    "webSiteName": {
+      "type": "string",
+      "metadata": {
+        "description": "Describes Web Site name which should be unique"
+      }
+    },
+    "nodeServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Describes the node server name which should be unique"
+      }
+    },
+    "apiServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Describes API Server name which should be unique"
+      }
+    },
+
+    //Web App Parameters End
+
+    //B2C Parameters Start
+
+    "b2cTenant": {
+      "type": "string",
+      "metadata": {
+        "description": "Describes B2C Tenant Name Directory"
+      }
+    },
+    "b2cClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Describes the client Id registered with B2C Directory"
+      }
+    },
+    "b2cSignUpSignInPolicyId": {
+      "type": "string",
+      "metadata": {
+        "description": "Describes the B2C Sign Up-Sign In policy"
+      }
+    },
+    "b2cNativeRedirectURL": {
+      "type": "string",
+      "metadata": {
+        "description": "Describes the B2C redirect URL for the Native Client"
+      }
+    },
+    "webjobStorageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+
+    //B2C Parameters End
+
+    //AD Parameters Start
+
+    "AdSubscriptionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscription ID of your Azure AD tenant"
+      }
+    },
+    "AdTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "Tenant ID of Azure AD"
+      }
+    },
+    "AdClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Client ID of Azure AD application"
+      }
+    },
+    "AdSecretKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Secret Key of Azure AD application"
+      }
+    }
+
+    //AD Parameters End
+
+
+  },
+  "variables": {
+    //IoT Hub Variables Start
+
+    "iotHubName": "[concat(parameters('iotHubName1'),uniqueString(resourceGroup().id))]",
+    "iotHubKeyName": "iothubowner",
+    "iotHubHostName": "[concat(variables('iotHubName'),'.azure-devices.net')]",
+    "d2cConsumerGroupName": "congrp_",
+
+    //IoT Hub Variables End
+
+    //Event Hub Variables Start
+
+    "namespaceName": "[concat(parameters('namespaceNamePrefix'),uniqueString(resourceGroup().id))]",
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "eventhubNamepaceResourceID": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('namespaceName'), variables('defaultSASKeyName'))]",
+    "primaryKey": "[concat(uniqueString(variables('namespaceName'), resourceGroup().Id, 'primaryKey'),'3VZcT2e5NfVeSFvTuiYUiWtXhxnJ2s=')]",
+    "secondaryKey": "[concat(uniqueString(variables('namespaceName'), resourceGroup().Id, 'secondaryKey'),'F9NRSV78nYomDlFjsz21X9aVKPL4Eo=')]",
+    "eventhubConnectionString": "[concat('Endpoint=sb://', variables('namespaceName'), '.servicebus.windows.net/;SharedAccessKeyName=EventHubOwner;SharedAccessKey=', variables('primaryKey'), ';EntityPath=', parameters('eventHubName'))]",
+
+    //Event Hub Variables End
+
+    //Streaming Variables Start
+
+    "streamingJobName": "datastream123",
+    "streamingJobQuery": "",
+
+    //Streaming Variables End
+
+    //Storage Variables Start
+    "DeployStorageAccountName": "arm",
+    "DeployStorageAccountKey": "?",
+    "WebAppDeployPackageURI": "https://arm.blob.core.windows.net/sysgaincheck/AssetMonitoring.zip",
+    "NodeServerDeployPackageURI": "https://arm.blob.core.windows.net/sysgaincheck/assetnodeserver.zip",
+    "RestServerDeployPackageURI": "https://arm.blob.core.windows.net/sysgaincheck/AssetMonitoring.API.zip",
+    "SasToken": "?",
+    "webjobStorageName": "[concat('myperstr', uniqueString(resourceGroup().id))]",
+    "blobStoragePublicContainer": "asset-monitoring-public-container",
+
+    //Storage Variables End
+
+    //Database Variables Start
+
+    //Document DB Start
+
+    "DocDBAccountName": "[concat(toLower(parameters('databaseAccountNamePrefix')),uniqueString('resourceGroup().id'))]",
+    "offerType": "Standard",
+    "DocDBName": "AssetTrackingDB",
+    "DocDBGroupGpsCollection": "GroupGpsData",
+    "DocDBSensorCollection": "SensorData",
+    "DocDBOfferThroughput": "2500",
+
+    //Document DB End
+
+    "sqlserverName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
+    "storageKeyType": "SharedAccessKey",
+    "bacpacUri": "https://arm.blob.core.windows.net/sysgaincheck/AssetMonitoring.bacpac",
+    "sqlServerAddress": "[concat('tcp:',variables('sqlserverName'),'.database.windows.net')]",
+    "databaseConnString": "[concat('Server=tcp:',variables('sqlserverName'),'.database.windows.net;initial catalog=',parameters('sqldatabasename'),';persist security info=True;user id=',parameters('sqlAdministratorLogin'),';password=',parameters('sqlAdministratorLoginPassword'),';MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;')]",
+
+    //Database Variables End
+
+    //B2C Variables Start
+
+    "b2cAadInstance": "https://login.microsoftonline.com/{0}/v2.0/.well-known/openid-configuration?p={1}",
+    "MobileTokenURL": "https://login.microsoftonline.com/{0}/oauth2/v2.0/token?p={1}&amp;grant_type=authorization_code&amp;client_id={2}&amp;code={3}",
+    "MobileInstanceUrl": "https://login.microsoftonline.com/{0}/oauth2/v2.0/authorize?p={1}&amp;client_id={2}&amp;response_type=code&amp;redirect_uri={3}&amp;response_mode=query&amp;scope=openid&amp;state=arbitrary_data_you_can_receive_in_the_response",
+
+    //B2C Variables End
+
+    //Web App Variables Start
+
+    "WebAppPackageURI": "[concat(variables('WebAppDeployPackageURI'), variables('SasToken'))]",
+    "NodeServerPackageURI": "[concat(variables('NodeServerDeployPackageURI'), variables('SasToken'))]",
+    "RESTServerPackageURI": "[concat(variables('RestServerDeployPackageURI'), variables('SasToken'))]",
+    "BlobconnectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('DeployStorageAccountName'),';AccountKey=',variables('DeployStorageAccountKey'))]",
+    "websiteFullAddress": "[concat('https://',parameters('webSiteName'),'.azurewebsites.net/')]",
+    "ADEndpoint": "https://login.windows.net/",
+    "WindowsManagementUri": "https://management.core.windows.net/",
+    //Web App Variables End
+
+    //App settings Variables Start
+
+    "PowerGridEntities": "[concat('metadata=res://*/Entities.PowergridModel.csdl|res://*/Entities.PowergridModel.ssdl|res://*/Entities.PowergridModel.msl;provider=System.Data.SqlClient;provider connection string=\"data source=',variables('sqlserverName'),'.database.windows.net;initial catalog=',parameters('sqldatabasename'),';persist security info=True;user id=',parameters('sqlAdministratorLogin'),';password=',parameters('sqlAdministratorLoginPassword'),';multipleactiveresultsets=True;application name=EntityFramework\"')]",
+    "alertJobOutput": "SqlDbOutput",
+    "alertJobInput": "IotHubInput",
+    "alertJobTable": "Alerts",
+    "alertJobNamePrefix": "GroupAlert_",
+    "ReportJobName": "TestJob",
+    "AlertJobConsumerGroupPrefix": "congrp_",
+
+    //App settings Variables End
+
+    //App Insights Variables Start
+
+    "appInsightResourceName": "[concat('AppInsights', uniquestring(resourceGroup().id))]"
+
+    //App Insights Variables End
+
+  },
+  "resources": [
+
+    //App Insights Resources Start
+
+    {
+      "apiVersion": "2014-04-01",
+      "name": "[variables('appInsightResourceName')]",
+      "type": "Microsoft.Insights/components",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+      ],
+      "tags": {
+        "displayName": "AppInsightsComponent"
+      },
+      "properties": {
+        "ApplicationId": "[variables('appInsightResourceName')]"
+      }
+    },
+
+    //App Insights Resources End
+
+    //IoT Hub Resources Start
+
+    {
+      "apiVersion": "2016-02-03",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('iotHubName')]",
+      "properties": {
+        "eventHubEndpoints": {
+          "events": {
+            "retentionTimeInDays": 1,
+            "partitionCount": 2
+          }
+        },
+        "cloudToDevice": {
+          "defaultTtlAsIso8601": "PT1H",
+          "maxDeliveryCount": 10,
+          "feedback": {
+            "maxDeliveryCount": 10,
+            "ttlAsIso8601": "PT1H",
+            "lockDurationAsIso8601": "PT60S"
+          }
+        },
+        "location": "[resourceGroup().location]"
+      },
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('capacityUnits')]"
+      },
+      "type": "Microsoft.Devices/IotHubs"
+    },
+    {
+      "apiVersion": "2016-02-03",
+      "dependsOn": [
+        "[concat('Microsoft.Devices/iothubs/', variables('iotHubName'))]"
+      ],
+      "name": "[concat(variables('iotHubName'), '/events/',variables('d2cConsumerGroupName'),copyIndex(1))]",
+      "type": "Microsoft.Devices/iotHubs/eventhubEndpoints/ConsumerGroups",
+      "copy": {
+        "name": "consumergroupcopy",
+        "mode": "Serial",
+        "count": 19
+      }
+    },
+
+    //IoT Hub Resources End
+
+    //Event Hub Resources Start
+
+    {
+      "apiVersion": "2017-04-01",
+      "name": "[variables('namespaceName')]",
+      "type": "Microsoft.EventHub/Namespaces",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "isAutoInflateEnabled": "true",
+        "maximumThroughputUnits": "2"
+      },
+      "resources": [
+        {
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('eventHubName')]",
+          "type": "EventHubs",
+          "dependsOn": [
+            "[concat('Microsoft.EventHub/namespaces/', variables('namespaceName'))]"
+          ],
+          "properties": {
+            "messageRetentionInDays": "3",
+            "partitionCount": "4"
+          },
+          "resources": [
+            {
+              "apiVersion": "2014-09-01",
+              "name": "EventHubOwner",
+              "type": "AuthorizationRules",
+              "dependsOn": [
+                "[parameters('eventHubName')]"
+              ],
+              "properties": {
+                "keyName": "EventHubOwner",
+                "claimType": "SharedAccessKey",
+                "claimValue": "None",
+                "primaryKey": "[variables('primaryKey')]",
+                "secondaryKey": "[variables('secondaryKey')]",
+                "rights": [ "Manage", "Send", "Listen" ],
+                "revision": -1
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    //Event Hub Resources End
+
+    //Database Resources Start
+
+    //Document DB Start
+
+    {
+      "apiVersion": "2015-04-08",
+      "kind": "GlobalDocumentDB",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "name": "[variables('DocDBAccountName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "name": "[variables('DocDBAccountName')]",
+        "databaseAccountOfferType": "[variables('offerType')]",
+        "locations": [
+          {
+            "locationName": "[resourceGroup().location]",
+            "failoverPriority": 0,
+            "id": "[concat(variables('DocDBAccountName'), '-', resourceGroup().location)]"
+          }
+        ]
+      },
+      "tags": {
+        "defaultExperience": "DocumentDB"
+      }
+    },
+
+    //Document DB End
+
+    {
+      "name": "[variables('sqlserverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "apiVersion": "2014-04-01",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "[parameters('sqldatabasename')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "Database"
+          },
+          "apiVersion": "2015-01-01",
+          "dependsOn": [
+            "[variables('sqlserverName')]"
+          ],
+          "properties": {
+            "edition": "Standard",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "268435456000",
+            "requestedServiceObjectiveName": "S2"
+          },
+          "resources": [
+            {
+              "name": "myImport",
+              "type": "extensions",
+              "apiVersion": "2014-04-01-preview",
+              "dependsOn": [
+                "[variables('sqlserverName')]",
+                "[parameters('sqldatabasename')]"
+              ],
+              "tags": {
+                "displayName": "myImport"
+              },
+              "properties": {
+                "storageKeyType": "[variables('storageKeyType')]",
+                "storageKey": "[variables('DeployStorageAccountKey')]",
+                "storageUri": "[variables('bacpacUri')]",
+                "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+                "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+                "operationMode": "Import"
+              }
+            }
+          ]
+        },
+        {
+          "type": "firewallrules",
+          "apiVersion": "2014-04-01",
+          "dependsOn": [
+            "[variables('sqlserverName')]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "AllowAllWindowsAzureIps",
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    },
+
+    //Database Resources End
+
+    //Web App Resources Start
+
+    {
+      "apiVersion": "2016-03-01",
+      "name": "[parameters('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "HostingPlan"
+      },
+      "sku": {
+        "name": "[parameters('webSkuName')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "properties": {
+        "name": "[parameters('hostingPlanName')]"
+      }
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "name": "[parameters('webSiteName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[parameters('hostingPlanName')]",
+        "[variables('appInsightResourceName')]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName')))]": "empty",
+        "displayName": "Website"
+      },
+      "properties": {
+        "name": "[parameters('webSiteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('webSiteName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('webSiteName'), '/extensions/MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "WebAppConfig"
+          },
+          "properties": {
+            "phpVersion": "5.6",
+            "netFrameworkVersion": "v4.6",
+            "use32BitWorkerProcess": false,
+            "webSocketsEnabled": true,
+            "alwaysOn": true,
+            "remoteDebuggingEnabled": true,
+            "remoteDebuggingVersion": "VS2015"
+          }
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('webSiteName'))]",
+            "[concat('Microsoft.Storage/storageAccounts/', variables('webjobStorageName'))]"
+          ],
+          "tags": {
+            "displayName": "WebAppMSDeploy"
+          },
+          "properties": {
+            "packageUri": "[variables('WebAppPackageURI')]"
+          }
+        },
+        {
+          "name": "connectionstrings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('webSiteName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('webSiteName'), '/extensions/MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "WebAppConnectionStrings"
+          },
+          "properties": {
+            "BlobConnection": {
+              "value": "[variables('BlobconnectionString')]",
+              "type": "Custom"
+            }
+          }
+        },
+        {
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('webSiteName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('webSiteName'), '/extensions/MSDeploy')]",
+            "[parameters('eventHubName')]"
+          ],
+          "tags": {
+            "displayName": "websiteAppSettings"
+          },
+          "properties": {
+            "restServer": "[concat('https://', parameters('apiServerName'),'.azurewebsites.net/')]",
+            "nodeserver": "[concat('https://', parameters('nodeServerName'),'.azurewebsites.net/')]",
+            "b2cApplicationId": "[parameters('b2cClientId')]",
+            "tenantName": "[parameters('b2cTenant')]",
+            "signInPolicyName": "[parameters('b2cSignUpSignInPolicyId')]",
+            "redirect_uri": "[concat(variables('websiteFullAddress'),'#/dashboard')]",
+            "EventHubConnectionString": "[variables('eventhubConnectionString')]",
+            "EventHubPath": "[parameters('eventHubName')]",
+            "InstrumentationKey": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightResourceName')), '2014-04-01').InstrumentationKey]"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "name": "[parameters('nodeServerName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[parameters('hostingPlanName')]",
+        "[variables('appInsightResourceName')]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName')))]": "empty",
+        "displayName": "NodeServer"
+      },
+      "properties": {
+        "name": "[parameters('nodeServerName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('nodeServerName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('nodeServerName'), '/extensions/MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "NodeServerConfig"
+          },
+          "properties": {
+            "phpVersion": "5.6",
+            "netFrameworkVersion": "v4.6",
+            "use32BitWorkerProcess": false,
+            "webSocketsEnabled": true,
+            "alwaysOn": true,
+            "remoteDebuggingEnabled": true,
+            "remoteDebuggingVersion": "VS2015"
+          }
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('nodeServerName'))]",
+            "[concat('Microsoft.Storage/storageAccounts/', variables('webjobStorageName'))]"
+          ],
+          "tags": {
+            "displayName": "NodeServerMSDeploy"
+          },
+          "properties": {
+            "packageUri": "[variables('NodeServerPackageURI')]"
+          }
+        },
+        {
+          "name": "connectionstrings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('nodeServerName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('nodeServerName'), '/extensions/MSDeploy')]",
+            "[parameters('eventHubName')]"
+          ],
+          "tags": {
+            "displayName": "NodeServerConnectionStrings"
+          },
+          "properties": {
+            "BlobConnection": {
+              "value": "[variables('BlobconnectionString')]",
+              "type": "Custom"
+            },
+            "ConnectionString": {
+              "value": "[concat('HostName=',variables('iotHubName'),'.azure-devices.net;SharedAccessKeyName=',variables('iotHubKeyName'),';SharedAccessKey=',listKeys(resourceId('Microsoft.Devices/IotHubs/Iothubkeys', variables('iotHubName'), variables('iotHubKeyName')), '2016-02-03').primaryKey)]",
+              "type": "Custom"
+            },
+            "ConsumerGroup": {
+              "value": "[concat(variables('d2cConsumerGroupName'), '1')]",
+              "type": "Custom"
+            },
+            "EventHubConnectionString": {
+              "value": "[variables('eventhubConnectionString')]",
+              "type": "Custom"
+            },
+            "EventHubPath": {
+              "value": "[parameters('eventHubName')]",
+              "type": "Custom"
+            },
+            "InstrumentationKey": {
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightResourceName')), '2014-04-01').InstrumentationKey]",
+              "type": "Custom"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "name": "[parameters('apiServerName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('DocDBAccountName')]",
+        "[parameters('hostingPlanName')]",
+        "[variables('appInsightResourceName')]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName')))]": "empty",
+        "displayName": "RESTServer"
+      },
+      "properties": {
+        "name": "[parameters('apiServerName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('apiServerName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('apiServerName'), '/extensions/MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "RESTServerConfig"
+          },
+          "properties": {
+            "phpVersion": "5.6",
+            "netFrameworkVersion": "v4.6",
+            "use32BitWorkerProcess": false,
+            "webSocketsEnabled": true,
+            "alwaysOn": true,
+            "remoteDebuggingEnabled": true,
+            "remoteDebuggingVersion": "VS2015",
+            "cors": {
+              "allowedOrigins": [
+                "[concat('https://', parameters('webSiteName'), '.azurewebsites.net')]"
+              ]
+            }
+          }
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('apiServerName'))]",
+            "[concat('Microsoft.Storage/storageAccounts/', variables('webjobStorageName'))]",
+            "[concat('Microsoft.Devices/iothubs/', variables('iotHubName'))]"
+          ],
+          "tags": {
+            "displayName": "RESTServerMSDeploy"
+          },
+          "properties": {
+            "packageUri": "[variables('RESTServerPackageURI')]"
+          }
+        },
+        {
+          "name": "connectionstrings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('apiServerName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('apiServerName'), '/extensions/MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "RESTServerConnectionStrings"
+          },
+          "properties": {
+            "DBConnection": {
+              "value": "[variables('databaseConnString')]",
+              "type": "Custom"
+            },
+            "AzureWebJobsDashboard": {
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('webjobStorageName'),';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('webjobStorageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]",
+              "type": "Custom"
+            },
+            "AzureWebJobsStorage": {
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('webjobStorageName'),';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('webjobStorageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]",
+              "type": "Custom"
+            }
+          }
+        },
+        {
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('apiServerName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('apiServerName'), '/extensions/MSDeploy')]",
+            "[parameters('eventHubName')]"
+          ],
+          "tags": {
+            "displayName": "restAppSettings"
+          },
+          "properties": {
+            "b2c:AadInstance": "[variables('b2cAadInstance')]",
+            "b2c:Tenant": "[parameters('b2cTenant')]",
+            "b2c:ClientId": "[parameters('b2cClientId')]",
+            "b2c:SignUpInPolicyId": "[parameters('b2cSignUpSignInPolicyId')]",
+            "b2c:MobileRedirectUrl": "[parameters('b2cNativeRedirectURL')]",
+            "b2c:MobileTokenUrl": "[variables('MobileTokenURL')]",
+            "b2c:MobileInstanceUrl": "[variables('MobileInstanceUrl')]",
+
+            "blobStorage:ConnectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('webjobStorageName'),';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('webjobStorageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value,';EndpointSuffix=core.windows.net')]",
+
+            "applicationInsights:InstrumentationKey": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightResourceName')), '2014-04-01').InstrumentationKey]",
+
+            "iotHub:ConnectionString": "[concat('HostName=',variables('iotHubName'),'.azure-devices.net;SharedAccessKeyName=',variables('iotHubKeyName'),';SharedAccessKey=',listKeys(resourceId('Microsoft.Devices/IotHubs/Iothubkeys', variables('iotHubName'), variables('iotHubKeyName')), '2016-02-03').primaryKey)]",
+            "iotHub:HostName": "[variables('iotHubHostName')]",
+            "iotHub:SharedAccessPolicyKey": "[listKeys(resourceId('Microsoft.Devices/IotHubs/Iothubkeys', variables('iotHubName'), variables('iotHubKeyName')), '2016-02-03').primaryKey]",
+            "iotHub:SharedAccessPolicyName": "[variables('iotHubKeyName')]",
+
+            "documentDB:Endpoint": "[reference(concat('Microsoft.DocumentDb/databaseAccounts/', variables('DocDBAccountName'))).documentEndpoint]",
+            "documentDB:AuthKey": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('DocDBAccountName')), '2015-04-08').primaryMasterKey]",
+            "documentDB:AccountId": "[variables('DocDBAccountName')]",
+            "documentDB:OfferThroughput": "[variables('DocDBOfferThroughput')]",
+
+            "simulator:DbServer": "[variables('sqlServerAddress')]",
+            "simulator:DbName": "[parameters('sqldatabasename')]",
+            "simulator:DbUserId": "[parameters('sqlAdministratorLogin')]",
+            "simulator:DbPassword": "[parameters('sqlAdministratorLoginPassword')]",
+
+            "sql:Server": "[concat(variables('sqlserverName'),'.database.windows.net')]",
+            "sql:Database": "[parameters('sqldatabasename')]",
+            "sql:User": "[parameters('sqlAdministratorLogin')]",
+            "sql:Password": "[parameters('sqlAdministratorLoginPassword')]",
+
+            "sa:WindowsManagementUri": "[variables('WindowsManagementUri')]",
+            "sa:ReportJobName": "[variables('ReportJobName')]",
+            "sa:JobResourceGroup": "[resourceGroup().name]",
+            "sa:JobLocation": "[resourceGroup().location]",
+            "sa:AlertJobTable": "[variables('alertJobTable')]",
+            "sa:AlertJobConsumerGroupPrefix": "[variables('AlertJobConsumerGroupPrefix')]",
+            "sa:AlertJobConsumerGroupCount": "19",
+            "sa:StreamingUnits": "3",
+
+            "ad:Endpoint": "[variables('ADEndpoint')]",
+            "ad:SubscriptionId": "[parameters('AdSubscriptionId')]",
+            "ad:TenantId": "[parameters('AdTenantId')]",
+            "ad:ClientId": "[parameters('AdClientId')]",
+            "ad:ClientSecret": "[parameters('AdSecretKey')]",
+
+            "eventHub:ConnectionString": "[variables('eventhubConnectionString')]",
+            "eventHub:Name": "[parameters('eventHubName')]",
+            "eventHub:NameSpace": "[variables('namespaceName')]",
+            "eventHub:PolicyName": "[variables('defaultSASKeyName')]",
+            "eventHub:PolicyKey": "[listkeys(variables('eventhubNamepaceResourceID'), '2017-04-01').primaryKey]",
+
+            "DBConnection": "[variables('databaseConnString')]"
+
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('webjobStorageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[parameters('webjobStorageType')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "webjobStorage"
+      },
+      "kind": "Storage"
+    }
+
+    //Web App Resources End
+  ],
+  "outputs": {
+    //Database Output Start
+
+    "sqlSvrFqdn": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName]"
+    },
+
+    //Database Output End
+
+    //Web App Output Start
+
+    "WebSiteUri": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Web/sites/', parameters('webSiteName'))).hostnames[0]]"
+    },
+    "RESTSiteUri": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Web/sites/', parameters('apiServerName'))).hostnames[0]]"
+    }
+
+    //Web App Output End
+  }
+}

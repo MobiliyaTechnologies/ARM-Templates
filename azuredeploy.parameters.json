@@ -1,0 +1,81 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "iotHubName1": {
+      "value": "synnexIoTHub2018"
+    },
+    "skuName": {
+      "value": "S1"
+    },
+    "capacityUnits": {
+      "value": "1"
+    },
+    "namespaceNamePrefix": {
+      "value": "assetSynnexIoTHub"
+    },
+    "eventHubName": {
+      "value": "assetSynnexEventHub2018"
+    },
+    "databaseAccountNamePrefix": {
+      "value": "SynnexDBAcnt"
+    },
+    "sqlAdministratorLogin": {
+      "value": "synnexDBAdmin"
+    },
+    "sqlAdministratorLoginPassword": {
+      "value": "P@ssw0rd"
+    },
+    "sqldatabasename": {
+      "value": "assetSynnextDB"
+    },
+    "webSkuName": {
+      "value": "S1"
+    },
+    "skuCapacity": {
+      "value": "1"
+    },
+    "hostingPlanName": {
+      "value": "SynnextAppServPlan"
+    },
+    "webSiteName": {
+      "value": "SynnexAssetWebApp"
+    },
+    "nodeServerName": {
+      "value": "SynnexAssetNodeServ"
+    },
+    "apiServerName": {
+      "value": "SynnexAssetRestServ"
+    },
+    "analyticsServerName": {
+      "value": "SynnexAssetAnlyServ"
+    },
+    "b2cTenant": {
+      "value": "assetsynnex.onmicrosoft.com"
+    },
+    "b2cClientId": {
+      "value": "a2ecd455-5f2a-4329-adae-fe8eb438f68q"
+    },
+    "b2cSignUpSignInPolicyId": {
+      "value": "B2C_1_SiUpIn"
+    },
+    "b2cNativeRedirectURL": {
+      "value": "com.onmicrosoft.assetsynnex://redirecturl/"
+    },
+    "webjobStorageType": {
+      "value": "Standard_LRS"
+    },
+    "AdSubscriptionId": {
+      "value": "22b4e5a3-9229-45e2-a9f6-8bbc0a6ebad3"
+    },
+    "AdTenantId": {
+      "value": "a777201d-76f6-418d-a006-757537715dd4"
+    },
+    "AdClientId": {
+      "value": "f2e59d4c-f24c-44b2-a705-96bba6b84784"
+    },
+    "AdSecretKey": {
+      "value": "fCc6Sjut/mKgBzqwNK0DTSmEYps4iHu9Cr6qVQtnH7A="
+    }
+  }
+}
